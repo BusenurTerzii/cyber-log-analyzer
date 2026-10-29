@@ -1,0 +1,353 @@
+
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IP Güvenlik Detayı | Cyber Log Analyzer</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 30px;
+            background: #0b1120;
+            color: #e5e7eb;
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: auto;
+        }
+
+        .panel {
+            background: #151e30;
+            border: 1px solid #263249;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 22px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 16px;
+        }
+
+        .stat {
+            background: #1d293d;
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #2b3950;
+        }
+
+        .number {
+            display: block;
+            font-size: 28px;
+            font-weight: bold;
+            margin-top: 10px;
+            overflow-wrap: anywhere;
+        }
+
+        .muted {
+            color: #aab7cf;
+            line-height: 1.6;
+        }
+
+        a {
+            color: #93c5fd;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-weight: bold;
+            margin-top: 8px;
+        }
+
+        .high {
+            background: #7f1d1d;
+            color: #fecaca;
+        }
+
+        .medium {
+            background: #78350f;
+            color: #fde68a;
+        }
+
+        .low {
+            background: #14532d;
+            color: #bbf7d0;
+        }
+
+        .filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: end;
+            margin: 18px 0;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+        }
+
+        select, button, .reset {
+            background: #1d293d;
+            color: #e5e7eb;
+            border: 1px solid #3b4b65;
+            border-radius: 7px;
+            padding: 10px 12px;
+            font-size: 14px;
+        }
+
+        button {
+            background: #2563eb;
+            border-color: #2563eb;
+            cursor: pointer;
+        }
+
+        .reset {
+            display: inline-block;
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 650px;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 13px;
+            border-bottom: 1px solid #263249;
+            vertical-align: top;
+        }
+
+        th {
+            color: #93c5fd;
+            white-space: nowrap;
+        }
+
+        td {
+            overflow-wrap: anywhere;
+        }
+
+        .empty {
+            color: #aab7cf;
+            padding: 12px 0;
+        }
+
+        @media (max-width: 850px) {
+            .stats {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 550px) {
+            body {
+                padding: 15px;
+            }
+
+            .panel {
+                padding: 17px;
+            }
+
+            .stats {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+<div class="container">
+
+    <p>
+        <a href="{% url 'logs:dashboard' %}">
+            ← Kontrol Paneline Dön
+        </a>
+    </p>
+
+    <section class="panel">
+        <h1>🔎 IP Güvenlik Detayı</h1>
+
+        <p class="muted">İncelenen IP adresi</p>
+        <h2>{{ ip_address }}</h2>
+
+        <p class="muted">Genel risk değerlendirmesi</p>
+
+        {% if risk_level == "Yüksek" %}
+            <span class="status high">🔴 Yüksek Risk</span>
+        {% elif risk_level == "Orta" %}
+            <span class="status medium">🟠 Orta Risk</span>
+        {% else %}
+            <span class="status low">🟢 Düşük Risk</span>
+        {% endif %}
+
+        <h3 style="margin-top: 26px;">🛡️ Brute-Force Analizi</h3>
+
+        {% if brute_force_detected %}
+            <span class="status high">
+                ⚠️ Olası Brute-Force Tespit Edildi
+            </span>
+            <p class="muted">
+                Bu IP adresi, 1 dakika içinde en az 5 başarısız giriş
+                eşiğini karşılıyor. Bu durum olası bir saldırı göstergesidir,
+                kesin kanıt değildir.
+            </p>
+        {% else %}
+            <span class="status low">
+                ✓ Belirlenen eşik karşılanmadı
+            </span>
+            <p class="muted">
+                Analiz sırasında bu IP için 1 dakika içinde en az 5
+                başarısız giriş tespit edilmedi.
+            </p>
+        {% endif %}
+    </section>
+
+    <section class="stats">
+        <div class="stat">
+            Toplam Olay
+            <span class="number">{{ total_events }}</span>
+        </div>
+
+        <div class="stat">
+            Başarısız Giriş
+            <span class="number">{{ failed_count }}</span>
+        </div>
+
+        <div class="stat">
+            Başarılı Giriş
+            <span class="number">{{ successful_count }}</span>
+        </div>
+
+        <div class="stat">
+            Kritik Olay
+            <span class="number">{{ critical_count }}</span>
+        </div>
+    </section>
+
+    <section class="panel" style="margin-top: 22px;">
+        <h2>📋 İlgili Güvenlik Olayları</h2>
+
+        <p class="muted">
+            Olayları türüne ve önem seviyesine göre filtreleyebilirsin.
+            İstatistikler tüm olayları kapsar; tablo filtrelenir.
+        </p>
+
+        <form method="get" class="filters">
+            <div class="filter-group">
+                <label for="event_type">Olay Türü</label>
+                <select id="event_type" name="event_type">
+                    <option value="">Tüm olaylar</option>
+                    <option value="LOGIN_SUCCESS"
+                        {% if event_type_filter == "LOGIN_SUCCESS" %}selected{% endif %}>
+                        Başarılı giriş
+                    </option>
+                    <option value="LOGIN_FAILED"
+                        {% if event_type_filter == "LOGIN_FAILED" %}selected{% endif %}>
+                        Başarısız giriş
+                    </option>
+                    <option value="SUSPICIOUS_IP"
+                        {% if event_type_filter == "SUSPICIOUS_IP" %}selected{% endif %}>
+                        Şüpheli IP
+                    </option>
+                    <option value="OTHER"
+                        {% if event_type_filter == "OTHER" %}selected{% endif %}>
+                        Diğer
+                    </option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label for="severity">Önem Seviyesi</label>
+                <select id="severity" name="severity">
+                    <option value="">Tüm seviyeler</option>
+                    <option value="LOW"
+                        {% if severity_filter == "LOW" %}selected{% endif %}>
+                        Düşük
+                    </option>
+                    <option value="MEDIUM"
+                        {% if severity_filter == "MEDIUM" %}selected{% endif %}>
+                        Orta
+                    </option>
+                    <option value="HIGH"
+                        {% if severity_filter == "HIGH" %}selected{% endif %}>
+                        Yüksek
+                    </option>
+                    <option value="CRITICAL"
+                        {% if severity_filter == "CRITICAL" %}selected{% endif %}>
+                        Kritik
+                    </option>
+                </select>
+            </div>
+
+            <button type="submit">Filtrele</button>
+
+            <a class="reset" href="{% url 'logs:ip_detail' ip_address %}">
+                Filtreleri Temizle
+            </a>
+        </form>
+
+        {% if events %}
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Tarih</th>
+                        <th>Olay Türü</th>
+                        <th>Önem</th>
+                        <th>Açıklama</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for event in events %}
+                    <tr>
+                        <td>{{ event.timestamp|date:"d.m.Y H:i:s" }}</td>
+                        <td>{{ event.get_event_type_display }}</td>
+                        <td>
+                            {% if event.severity == "CRITICAL" %}
+                                <span class="status high">Kritik</span>
+                            {% elif event.severity == "HIGH" %}
+                                <span class="status medium">Yüksek</span>
+                            {% elif event.severity == "MEDIUM" %}
+                                <span class="status medium">Orta</span>
+                            {% else %}
+                                <span class="status low">Düşük</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ event.description }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+            <p class="empty">
+                Bu filtrelerle eşleşen güvenlik olayı bulunamadı.
+            </p>
+        {% endif %}
+    </section>
+
+</div>
+</body>
+</html>

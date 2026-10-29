@@ -1,0 +1,1037 @@
+
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Siber Güvenlik Log Analizi</title>
+
+    <style>
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            color-scheme: dark;
+            --bg: #080d19;
+            --surface: #101827;
+            --surface-hover: #162236;
+            --border: #25334a;
+            --text: #e6edf7;
+            --muted: #91a0b8;
+            --blue: #60a5fa;
+            --cyan: #4dd9e8;
+            --green: #4ade80;
+            --red: #fb7185;
+        }
+
+        body {
+            font-family: "Segoe UI", Arial, sans-serif;
+            background:
+                radial-gradient(ellipse at top left, #142342 0%, transparent 42%),
+                var(--bg);
+            color: var(--text);
+            padding: 32px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1440px;
+            margin: 0 auto;
+        }
+
+        header {
+            margin-bottom: 30px;
+            padding: 28px 30px;
+            background: linear-gradient(120deg, #14233a, #101827 70%);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            box-shadow: 0 12px 35px #00000020;
+        }
+
+        header h1 {
+            font-size: clamp(25px, 3vw, 34px);
+            letter-spacing: -0.7px;
+            color: #f8fafc;
+            margin-bottom: 8px;
+        }
+
+        header p {
+            color: var(--muted);
+            margin-top: 8px;
+        }
+
+        .status {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 16px;
+            padding: 7px 13px;
+            border: 1px solid #226044;
+            border-radius: 999px;
+            background: #102d25;
+            color: var(--green);
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin: 22px 0;
+            align-items: center;
+        }
+
+        input, select, button {
+            padding: 11px 14px;
+            border-radius: 9px;
+            border: 1px solid #34445e;
+            font: inherit;
+            font-size: 14px;
+            transition: border-color .2s, background .2s, transform .2s;
+        }
+
+        input, select {
+            background: #101827;
+            color: var(--text);
+            max-width: 100%;
+        }
+
+        input:focus, select:focus {
+            outline: 2px solid #3b82f680;
+            border-color: var(--blue);
+        }
+
+        button {
+            cursor: pointer;
+            background: #2563eb;
+            color: white;
+            border: 1px solid #3b82f6;
+            font-weight: 600;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+            transform: translateY(-1px);
+        }
+
+        .clear-link {
+            color: var(--blue);
+            text-decoration: none;
+            padding: 10px;
+        }
+
+        .clear-link:hover {
+            color: var(--cyan);
+        }
+
+        .action-button {
+            display: inline-block;
+            margin-top: 12px;
+            background: #17263d;
+            border: 1px solid #34445e;
+            color: #dbeafe;
+            padding: 12px 18px;
+            border-radius: 9px;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .action-button:hover {
+            background: #223653;
+        }
+
+       
+        .charts {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 22px;
+            margin-bottom: 30px;
+        }
+
+        .chart-card, .card, .panel {
+            background: linear-gradient(145deg, #131f32, #0e1726);
+            border: 1px solid #2b3b54;
+            border-radius: 16px;
+            padding: 25px;
+            min-width: 0;
+            box-shadow: 0 10px 28px #00000022;
+            transition: border-color .2s ease, box-shadow .2s ease;
+        }
+
+        .chart-card:hover {
+            border-color: #3b587a;
+            box-shadow: 0 14px 32px #00000030;
+        }
+
+        .chart-card h2, .panel h2 {
+            font-size: 19px;
+            line-height: 1.4;
+            margin-bottom: 22px;
+            color: #f1f5f9;
+            letter-spacing: -0.2px;
+        }
+
+        .chart-card canvas {
+            display: block;
+            width: 100%;
+            max-width: 100%;
+            max-height: 320px;
+        }
+
+        @media (max-width: 700px) {
+            .charts {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+        }
+
+        
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(145deg, #16243a, #101827);
+            border: 1px solid #2b3c56;
+            border-radius: 16px;
+            padding: 25px;
+            min-width: 0;
+            box-shadow: 0 8px 22px #00000020;
+            transition: transform .2s ease, border-color .2s ease,
+                        box-shadow .2s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            border-color: #4b6b94;
+            box-shadow: 0 14px 28px #00000035;
+        }
+
+        .card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, var(--blue), var(--cyan), transparent);
+        }
+
+        .card p {
+            color: var(--muted);
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .number {
+            font-size: clamp(28px, 3vw, 38px);
+            line-height: 1.2;
+            font-weight: 750;
+            letter-spacing: -1px;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .blue { color: var(--blue); }
+        .orange { color: #fb923c; }
+        .red { color: var(--red); }
+        .purple { color: #c4b5fd; }
+
+        .panel {
+            overflow-x: auto;
+            margin-bottom: 24px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            min-width: 650px;
+        }
+
+        th, td {
+            padding: 14px 13px;
+            text-align: left;
+            border-bottom: 1px solid #25334a;
+            font-size: 13px;
+            vertical-align: middle;
+        }
+
+        th {
+            color: var(--muted);
+            font-weight: 650;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+            background: #141f31;
+        }
+
+        th:first-child {
+            border-radius: 8px 0 0 0;
+        }
+
+        th:last-child {
+            border-radius: 0 8px 0 0;
+        }
+
+        td {
+            color: #dbe5f3;
+            overflow-wrap: anywhere;
+        }
+
+        tbody tr {
+            transition: background .15s;
+        }
+
+        tbody tr:hover td {
+            background: #172337;
+        }
+
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        td a {
+            color: var(--blue);
+            text-decoration: none;
+        }
+
+        td a:hover {
+            text-decoration: underline;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 5px 9px;
+            border-radius: 7px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: .3px;
+        }
+
+        .HIGH {
+            background: #422006;
+            color: #fdba74;
+        }
+
+        .CRITICAL {
+            background: #450a0a;
+            color: #fca5a5;
+        }
+
+        .MEDIUM {
+            background: #422006;
+            color: #fcd34d;
+        }
+
+        .LOW {
+            background: #172554;
+            color: #93c5fd;
+        }
+
+        .empty {
+            color: var(--muted);
+            padding: 22px 0;
+        }
+
+        .security-alert {
+            margin: 20px 0;
+            padding: 22px;
+            background: linear-gradient(135deg, #172337, #111a2a);
+            border: 1px solid #475569;
+            border-left: 4px solid #f59e0b;
+            border-radius: 14px;
+            color: #e2e8f0;
+            box-shadow: 0 8px 24px #00000018;
+        }
+
+        .security-alert h3 {
+            margin-bottom: 10px;
+            color: #fbbf24;
+            font-size: 18px;
+        }
+
+        .security-alert ul {
+            margin-top: 10px;
+            padding-left: 22px;
+        }
+
+        .security-alert li {
+            margin-bottom: 8px;
+            color: #cbd5e1;
+        }
+
+        .security-alert a {
+            color: #93c5fd;
+        }
+
+        .security-alert a:hover {
+            color: #bfdbfe;
+        }
+
+        .critical-panel {
+            background: linear-gradient(135deg, #1d202e, #141827);
+            border: 1px solid #7f3544;
+            border-left: 4px solid #f87171;
+            border-radius: 14px;
+            padding: 22px;
+            margin: 20px 0;
+            box-shadow: 0 8px 24px #00000018;
+        }
+
+        .critical-panel h2 {
+            color: #fca5a5;
+            font-size: 19px;
+            margin-bottom: 12px;
+        }
+
+        .critical-description {
+            color: #cbd5e1;
+            margin-bottom: 18px;
+            font-size: 14px;
+        }
+
+        .critical-item {
+            padding: 15px;
+            margin-top: 10px;
+            background: #301b27;
+            border: 1px solid #50303d;
+            border-radius: 10px;
+            overflow-wrap: anywhere;
+        }
+
+        .critical-item strong {
+            color: #fda4af;
+        }
+
+        .critical-date {
+            color: var(--muted);
+            font-size: 12px;
+            margin-top: 6px;
+        }
+
+        .critical-text {
+            margin-top: 8px;
+            color: #e2e8f0;
+            font-size: 14px;
+        }
+
+        .risk-high, .risk-medium, .risk-low {
+            padding: 6px 10px;
+            border-radius: 7px;
+            font-size: 12px;
+            font-weight: 700;
+            display: inline-block;
+        }
+
+        .risk-high {
+            color: #fecaca;
+            background: #7f1d1d;
+        }
+
+        .risk-medium {
+            color: #fde68a;
+            background: #78350f;
+        }
+
+        .risk-low {
+            color: #bbf7d0;
+            background: #14532d;
+        }
+
+        footer {
+            text-align: center;
+            color: #64748b;
+            margin-top: 28px;
+            padding: 20px 0;
+            font-size: 12px;
+        }
+
+        @media (max-width: 1000px) {
+            body {
+                padding: 20px;
+            }
+
+            .cards {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 700px) {
+            body {
+                padding: 12px;
+            }
+
+            header, .chart-card, .card, .panel {
+                padding: 17px;
+                border-radius: 12px;
+            }
+
+            .cards, .charts {
+                grid-template-columns: 1fr;
+            }
+
+            header h1 {
+                font-size: 24px;
+            }
+
+            .filters {
+                align-items: stretch;
+            }
+
+            .filters input, .filters select, .filters button {
+                width: 100%;
+            }
+        }
+
+    </style>
+</head>
+
+<body>
+<div class="container">
+
+    <header>
+        <h1>🛡️ Siber Güvenlik Kontrol Paneli</h1>
+        <p>Log analizi ve güvenlik olaylarının izlenmesi</p>
+        <span class="status">● Yerel analiz paneli aktif</span>
+
+        {% if high_risk_ips %}
+        <div class="security-alert">
+            <h3>⚠️ Güvenlik Uyarısı</h3>
+            <p>
+                {{ high_risk_ips|length }}
+                orta veya yüksek riskli IP adresi tespit edildi.
+            </p>
+
+            <ul>
+                {% for item in high_risk_ips %}
+                <li>
+                    <a href="{% url 'logs:ip_detail' item.ip_address %}">
+                        {{ item.ip_address }}
+                    </a>
+                    — {{ item.failed_count }} başarısız giriş
+                    — Risk: {{ item.risk_level }}
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        {% if critical_event_list %}
+        <section class="critical-panel">
+            <h2>🚨 Kritik Güvenlik Olayları</h2>
+
+            <p class="critical-description">
+                Son kayıtlarda {{ critical_event_list|length }}
+                kritik olay bulundu. Bu olayları incelemeni öneririz.
+            </p>
+
+            {% for event in critical_event_list %}
+            <div class="critical-item">
+                <strong>IP adresi:</strong>
+                <a href="{% url 'logs:ip_detail' event.ip_address %}">
+                    {{ event.ip_address }}
+                </a>
+
+                <div class="critical-date">
+                    Tarih: {{ event.timestamp|date:"d.m.Y H:i" }}
+                </div>
+
+                <div class="critical-text">
+                    <strong>Açıklama:</strong>
+                    {{ event.description|default:"Açıklama yok" }}
+                </div>
+            </div>
+            {% endfor %}
+        </section>
+        {% endif %}
+
+        <form method="post" style="margin-top: 20px;">
+            {% csrf_token %}
+            <button type="submit">📥 Log Dosyasını İçe Aktar</button>
+        </form>
+
+        <a href="{% url 'logs:download_report' %}" class="action-button">
+            📄 JSON Raporunu İndir
+        </a>
+
+        {% if messages %}
+            {% for message in messages %}
+            <p style="margin-top: 12px; color: #4ade80;">
+                {{ message }}
+            </p>
+            {% endfor %}
+        {% endif %}
+    </header>
+
+    <form method="get" class="filters">
+        <input
+            type="text"
+            name="ip"
+            placeholder="IP adresi ara..."
+            value="{{ request.GET.ip|default:'' }}"
+        >
+
+        <select name="severity">
+            <option value="">Tüm önem seviyeleri</option>
+            <option value="LOW" {% if request.GET.severity == "LOW" %}selected{% endif %}>Düşük</option>
+            <option value="MEDIUM" {% if request.GET.severity == "MEDIUM" %}selected{% endif %}>Orta</option>
+            <option value="HIGH" {% if request.GET.severity == "HIGH" %}selected{% endif %}>Yüksek</option>
+            <option value="CRITICAL" {% if request.GET.severity == "CRITICAL" %}selected{% endif %}>Kritik</option>
+        </select>
+
+        <select name="event_type">
+            <option value="">Tüm olay türleri</option>
+            <option value="LOGIN_SUCCESS" {% if request.GET.event_type == "LOGIN_SUCCESS" %}selected{% endif %}>Başarılı giriş</option>
+            <option value="LOGIN_FAILED" {% if request.GET.event_type == "LOGIN_FAILED" %}selected{% endif %}>Başarısız giriş</option>
+            <option value="SUSPICIOUS_IP" {% if request.GET.event_type == "SUSPICIOUS_IP" %}selected{% endif %}>Şüpheli IP</option>
+            <option value="OTHER" {% if request.GET.event_type == "OTHER" %}selected{% endif %}>Diğer</option>
+        </select>
+
+        <button type="submit">Filtrele</button>
+        <a href="{% url 'logs:dashboard' %}" class="clear-link">Temizle</a>
+    </form>
+
+    <section class="charts">
+        <div class="chart-card">
+            <h2>Önem Seviyelerine Göre Dağılım</h2>
+            <canvas id="severityChart"></canvas>
+        </div>
+
+        <div class="chart-card">
+            <h2>Olay Türlerine Göre Dağılım</h2>
+            <canvas id="eventChart"></canvas>
+        </div>
+    </section>
+
+    <section class="cards">
+        <div class="card">
+            <p>Toplam Güvenlik Olayı</p>
+            <div class="number blue">{{ total_events }}</div>
+        </div>
+
+        <div class="card">
+            <p>Yüksek Önemli Olaylar</p>
+            <div class="number orange">{{ high_events }}</div>
+        </div>
+
+        <div class="card">
+            <p>Kritik Olaylar</p>
+            <div class="number red">{{ critical_events }}</div>
+        </div>
+
+        <div class="card">
+            <p>Şüpheli IP Olayları</p>
+            <div class="number purple">{{ suspicious_events }}</div>
+        </div>
+    </section>
+
+    <section class="panel">
+        <h2>Son Güvenlik Olayları</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Tarih</th>
+                    <th>IP Adresi</th>
+                    <th>Olay Türü</th>
+                    <th>Önem Seviyesi</th>
+                    <th>Açıklama</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for event in recent_events %}
+                <tr>
+                    <td>{{ event.timestamp|date:"d.m.Y H:i" }}</td>
+                    <td>{{ event.ip_address }}</td>
+                    <td>{{ event.get_event_type_display }}</td>
+                    <td>
+                        <span class="badge {{ event.severity }}">
+                            {{ event.get_severity_display }}
+                        </span>
+                    </td>
+                    <td>{{ event.description|default:"-" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="empty">
+                        Henüz güvenlik olayı kaydedilmemiş.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </section>
+
+    <section class="panel">
+        <h2>🚨 Şüpheli IP Analizi</h2>
+
+        <p style="color: #aab7cf; margin-bottom: 18px;">
+            Başarısız giriş sayısına göre şüpheli görünen IP adresleri.
+            Brute-force sınıflandırması tek başına kesin saldırı kanıtı değildir.
+        </p>
+
+        {% if suspicious_ips %}
+        <table>
+            <thead>
+                <tr>
+                    <th>IP Adresi</th>
+                    <th>Başarısız Giriş Sayısı</th>
+                    <th>Risk Seviyesi</th>
+                    <th>Saldırı Analizi</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for item in suspicious_ips %}
+                <tr>
+                    <td>
+                        <a
+                            href="{% url 'logs:ip_detail' item.ip_address %}"
+                            style="color: #93c5fd; text-decoration: none; font-weight: 600;"
+                        >
+                            {{ item.ip_address }}
+                        </a>
+                    </td>
+
+                    <td>
+                        <strong>{{ item.failed_count }}</strong>
+                    </td>
+
+                    <td>
+                        {% if item.risk_level == "Yüksek" %}
+                            <span class="risk-high">🔴 Yüksek Risk</span>
+                        {% elif item.risk_level == "Orta" %}
+                            <span class="risk-medium">🟠 Orta Risk</span>
+                        {% else %}
+                            <span class="risk-low">🟢 Düşük Risk</span>
+                        {% endif %}
+                    </td>
+
+                    <!-- Yeni saldırı analizi sütunu -->
+                    <td>
+                        {% if item.brute_force_detected %}
+                            <span class="risk-high">
+                                ⚠️ Olası Brute-Force
+                            </span>
+                        {% elif item.activity == "Tekrarlanan Başarısız Giriş" %}
+                            <span class="risk-medium">
+                                ⚠️ Tekrarlanan Giriş
+                            </span>
+                        {% else %}
+                            <span class="risk-low">
+                                Normal / Düşük Şüphe
+                            </span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+            <p class="empty">Şüpheli IP tespit edilmedi.</p>
+        {% endif %}
+    </section>
+    
+<section class="panel" style="margin-top: 24px;">
+    
+<h2>🔔 Güvenlik Uyarıları</h2>
+
+<p style="color: #aab7cf;">
+    İncelenmemiş uyarı sayısı:
+    <strong>{{ unreviewed_alert_count }}</strong>
+</p>
+
+{% if security_alerts %}
+    <table>
+        <thead>
+            <tr>
+                <th>Oluşturulma</th>
+                <th>IP Adresi</th>
+                <th>Uyarı</th>
+                <th>Önem</th>
+                <th>Durum</th>
+                <th>İşlem</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for alert in security_alerts %}
+            <tr>
+                <td>{{ alert.created_at|date:"d.m.Y H:i" }}</td>
+                <td>
+                    <a href="{% url 'logs:ip_detail' alert.ip_address %}">
+                        {{ alert.ip_address }}
+                    </a>
+                </td>
+                <td>
+                    <strong>{{ alert.title }}</strong>
+                    <br>
+                    <span style="color: #aab7cf;">
+                        {{ alert.description }}
+                    </span>
+                </td>
+                <td>{{ alert.get_severity_display }}</td>
+                <td>
+                    {% if alert.is_reviewed %}
+                        <span class="risk-low">✓ İncelendi</span>
+                    {% else %}
+                        <span class="risk-high">● İncelenmedi</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if not alert.is_reviewed %}
+                        <form method="post"
+                              action="{% url 'logs:mark_alert_reviewed' alert.id %}">
+                            {% csrf_token %}
+                            <button type="submit">
+                                İncelendi olarak işaretle
+                            </button>
+                        </form>
+                    {% else %}
+                        <span>✓ Tamamlandı</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <p class="empty">
+        Henüz güvenlik uyarısı oluşturulmamış.
+    </p>
+{% endif %}
+</section>
+
+
+    
+<section class="panel" style="margin-top: 24px;">
+    <h2>🛡️ Zaman Pencereli Brute-Force Tespitleri</h2>
+
+    <p style="color: #aab7cf; margin-bottom: 18px;">
+        Aynı IP adresinden 1 dakika içinde 5 veya daha fazla
+        başarısız giriş tespit edildiğinde burada listelenir.
+        Bu sonuçlar olası saldırı göstergesidir, kesin kanıt değildir.
+    </p>
+
+    {% if brute_force_detections %}
+        <table>
+            <thead>
+                <tr>
+                    <th>IP Adresi</th>
+                    <th>Eşik</th>
+                    <th>Zaman Penceresi</th>
+                    <th>Tespit</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for item in brute_force_detections %}
+                <tr>
+                    <td>
+                        <a
+                            href="{% url 'logs:ip_detail' item.ip_address %}"
+                            style="color: #93c5fd; text-decoration: none; font-weight: 600;"
+                        >
+                            {{ item.ip_address }}
+                        </a>
+                    </td>
+
+                    <td>
+                        {{ item.failed_login_threshold }} başarısız giriş
+                    </td>
+
+                    <td>
+                        {{ item.window_minutes }} dakika
+                    </td>
+
+                    <td>
+                        <span class="risk-high">
+                            ⚠️ {{ item.activity }}
+                        </span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p class="empty">
+            Belirlenen zaman penceresinde Brute-Force eşiğini aşan IP bulunamadı.
+        </p>
+    {% endif %}
+</section>
+
+
+    <footer>
+        Python &amp; Django ile geliştirilmiştir · Eğitim amaçlı proje
+    </footer>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script type="application/json" id="severity-labels">{{ severity_labels_json|safe }}</script>
+<script type="application/json" id="severity-values">{{ severity_values_json|safe }}</script>
+<script type="application/json" id="event-labels">{{ event_labels_json|safe }}</script>
+<script type="application/json" id="event-values">{{ event_values_json|safe }}</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const severityLabels = JSON.parse(
+        document.getElementById("severity-labels").textContent
+    );
+
+    const severityValues = JSON.parse(
+        document.getElementById("severity-values").textContent
+    );
+
+    const eventLabels = JSON.parse(
+        document.getElementById("event-labels").textContent
+    );
+
+    const eventValues = JSON.parse(
+        document.getElementById("event-values").textContent
+    );
+
+    const severityCanvas = document.getElementById("severityChart");
+    const eventCanvas = document.getElementById("eventChart");
+
+    if (typeof Chart === "undefined") {
+        console.error("Chart.js yüklenemedi.");
+        return;
+    }
+
+
+    if (severityCanvas) {
+        new Chart(severityCanvas, {
+            type: "bar",
+            data: {
+                labels: severityLabels,
+                datasets: [{
+                    label: "Olay sayısı",
+                    data: severityValues,
+                    backgroundColor: [
+                        "#60a5fa",
+                        "#facc15",
+                        "#fb923c",
+                        "#fb7185"
+                    ],
+                    borderColor: [
+                        "#93c5fd",
+                        "#fde047",
+                        "#fdba74",
+                        "#fda4af"
+                    ],
+                    borderWidth: 1,
+                    borderRadius: 7,
+                    maxBarThickness: 52
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                scales: {
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            color: "#a8b7cc"
+                        },
+                        border: {
+                            display: false
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            precision: 0,
+                            color: "#91a0b8"
+                        },
+                        grid: {
+                            color: "rgba(148, 163, 184, 0.12)"
+                        },
+                        border: {
+                            display: false
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: "#101827",
+                        titleColor: "#f1f5f9",
+                        bodyColor: "#cbd5e1",
+                        borderColor: "#34445e",
+                        borderWidth: 1,
+                        padding: 12,
+                        cornerRadius: 8
+                    }
+                }
+            }
+        });
+    }
+
+    if (eventCanvas) {
+        new Chart(eventCanvas, {
+            type: "doughnut",
+            data: {
+                labels: eventLabels,
+                datasets: [{
+                    data: eventValues,
+                    backgroundColor: [
+                        "#60a5fa",
+                        "#fb923c",
+                        "#fb7185",
+                        "#a78bfa"
+                    ],
+                    borderColor: "#101827",
+                    borderWidth: 3,
+                    hoverOffset: 7
+                }]
+            },
+            options: {
+                responsive: true,
+                cutout: "68%",
+                plugins: {
+                    legend: {
+                        position: "bottom",
+                        labels: {
+                            color: "#cbd5e1",
+                            padding: 18,
+                            usePointStyle: true,
+                            pointStyle: "circle"
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: "#101827",
+                        titleColor: "#f1f5f9",
+                        bodyColor: "#cbd5e1",
+                        borderColor: "#34445e",
+                        borderWidth: 1,
+                        padding: 12,
+                        cornerRadius: 8
+                    }
+                }
+            }
+        });
+    }
+});
+
+</script>
+
+</body>
+</html>

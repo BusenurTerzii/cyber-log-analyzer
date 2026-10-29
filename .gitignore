@@ -1,0 +1,9 @@
+venv/
+__pycache__/
+*.py[cod]
+db.sqlite3
+security_report.json
+security_report*.json
+.env
+*.log
+logs/templates/logs/dashboard_backup.html
