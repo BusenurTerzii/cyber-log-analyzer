@@ -29,6 +29,14 @@ Run the tests with:
 python manage.py test logs
 ```
 
+## Testing
+
+Run the tests with:
+
+```bash
+python manage.py test logs
+```
+
 ## Screenshots
 
 The following screenshots demonstrate the cybersecurity dashboard, event monitoring, suspicious IP analysis, and brute-force detection features.
