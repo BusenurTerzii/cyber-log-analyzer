@@ -27,25 +27,32 @@ Run the tests with:
 
 ```bash
 python manage.py test logs
+```
+
 ## Screenshots
 
-### Security Dashboard
-![Security Dashboard](screenshots/dashboard.png)
+The following screenshots demonstrate the cybersecurity dashboard, event monitoring, suspicious IP analysis, and brute-force detection features.
 
-### IP Security Details
-![IP Security Details](screenshots/ip-detail.png)
-## Proje Ekran Görüntüleri
+### 1. Security Dashboard
 
-### Siber Güvenlik Kontrol Paneli
+![Security Dashboard](screenshots/cyber-dashboard-1.png)
 
-![Kontrol Paneli 1](screenshots/cyber-dashboard-1.png)
+### 2. Security Alerts and Critical Events
 
-![Kontrol Paneli 2](screenshots/cyber-dashboard-2.png)
+![Security Alerts](screenshots/cyber-dashboard-2.png)
 
-![Kontrol Paneli 3](screenshots/cyber-dashboard-3.png)
+### 3. Security Event Monitoring
 
-![Kontrol Paneli 4](screenshots/cyber-dashboard-4.png)
+![Security Event Monitoring](screenshots/cyber-dashboard-3.png)
 
-![Kontrol Paneli 5](screenshots/cyber-dashboard-5.png)
+### 4. Suspicious IP Analysis
 
-![Kontrol Paneli 6](screenshots/cyber-dashboard-6.png)
+![Suspicious IP Analysis](screenshots/cyber-dashboard-4.png)
+
+### 5. Brute-Force Detection and Alert Management
+
+![Brute-Force Detection](screenshots/cyber-dashboard-5.png)
+
+### 6. IP Security Details
+
+![IP Security Details](screenshots/cyber-dashboard-6.png)
